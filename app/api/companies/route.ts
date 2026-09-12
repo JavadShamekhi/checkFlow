@@ -57,3 +57,46 @@ export async function POST(request: Request) {
 		);
 	}
 }
+
+export async function GET() {
+	try {
+		const session = await auth();
+
+		if (!session?.user?.id) {
+			return NextResponse.json(
+					{message: "Unauthorized"},
+					{status: 401}
+			);
+		}
+
+		const memberships = await prisma.companyMember.findMany({
+			where: {
+				userId: session.user.id,
+			},
+			include: {
+				company: true,
+			},
+			orderBy: {
+				createdAt: "asc",
+			},
+		});
+
+		const companies = memberships.map((membership) => ({
+			id: membership.company.id,
+			name: membership.company.name,
+			role: membership.role,
+		}));
+
+		return NextResponse.json({
+			companies,
+		});
+
+	} catch (error) {
+		console.error("GET_COMPANIES_ERROR:", error);
+
+		return NextResponse.json(
+				{message: "Something went wrong"},
+				{status: 500}
+		);
+	}
+}
