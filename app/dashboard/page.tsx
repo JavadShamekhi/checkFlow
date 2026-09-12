@@ -1,6 +1,7 @@
 import { auth } from "@/app/lib/auth";
 import { redirect } from "next/navigation";
 import CreateCompanyForm from "@/app/components/CreateCompanyForm";
+import CompanyList from "@/app/components/CompanyList";
 
 export default async function DashboardPage() {
 	const session = await auth();
@@ -20,6 +21,8 @@ export default async function DashboardPage() {
 				</p>
 
 				<CreateCompanyForm />
+
+				<CompanyList />
 			</main>
 	);
 }
