@@ -1,5 +1,6 @@
 import {auth} from "@/app/lib/auth";
 import {prisma} from "@/app/lib/prisma";
+import Link from "next/link";
 
 export default async function CompanyList() {
 	const session = await auth();
@@ -36,18 +37,19 @@ export default async function CompanyList() {
 
 				<div className="mt-4 space-y-3">
 					{memberships.map((membership) => (
-							<div
+							<Link
 									key={membership.id}
-									className="rounded-md border p-4"
+									href={`/dashboard/company/${membership.company.id}`}
+									className="block rounded-md border p-4 transition hover:bg-gray-50"
 							>
 								<p className="font-medium">
 									{membership.company.name}
 								</p>
 
-								<p className="font-medium">
+								<p className="text-sm text-gray-500">
 									Role: {membership.role}
 								</p>
-							</div>
+							</Link>
 					))}
 				</div>
 			</section>
