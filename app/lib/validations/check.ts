@@ -1,19 +1,91 @@
 import { z } from "zod";
 
 export const createCheckSchema = z.object({
-	companyId: z.string().min(1),
-	bankAccountId: z.string().optional(),
-
 	type: z.enum(["RECEIVABLE", "PAYABLE"]),
 
-	checkNumber: z.string().min(1),
-	amount: z.coerce.number().positive(),
+	// Check identity
+	sayadId: z
+			.string()
+			.trim()
+			.regex(/^\d{16}$/, "Sayad ID must be exactly 16 digits"),
 
-	dueDate: z.coerce.date(),
+	series: z
+			.string()
+			.trim()
+			.min(1, "Series is required")
+			.max(50),
 
-	issuerName: z.string().optional(),
-	recipientName: z.string().optional(),
-	description: z.string().optional(),
+	serial: z
+			.string()
+			.trim()
+			.min(1, "Serial is required")
+			.max(50),
+
+	// Bank
+	bankId: z
+			.string()
+			.trim()
+			.min(1, "Bank is required"),
+
+	bankAccountId: z
+			.string()
+			.trim()
+			.optional(),
+
+	// Financial information
+	amount: z
+			.string()
+			.trim()
+			.min(1, "Amount is required"),
+
+	dueDate: z
+			.string()
+			.min(1, "Due date is required"),
+
+	// Issuer
+	issuerType: z
+			.enum(["INDIVIDUAL", "LEGAL_ENTITY"])
+			.optional(),
+
+	issuerName: z
+			.string()
+			.trim()
+			.max(200)
+			.optional(),
+
+	issuerNationalId: z
+			.string()
+			.trim()
+			.max(50)
+			.optional(),
+
+	// Recipient
+	recipientType: z
+			.enum(["INDIVIDUAL", "LEGAL_ENTITY"])
+			.optional(),
+
+	recipientName: z
+			.string()
+			.trim()
+			.max(200)
+			.optional(),
+
+	recipientNationalId: z
+			.string()
+			.trim()
+			.max(50)
+			.optional(),
+
+	// Business information
+	handedOverAt: z
+			.string()
+			.optional(),
+
+	description: z
+			.string()
+			.trim()
+			.max(1000)
+			.optional(),
 });
 
 export type CreateCheckInput = z.infer<typeof createCheckSchema>;
