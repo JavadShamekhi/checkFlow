@@ -9,10 +9,12 @@ type Bank = {
 
 type CreateBankAccountFormProps = {
 	companyId: string;
+	onAccountCreated: () => void;
 };
 
 export default function CreateBankAccountForm({
 	                                              companyId,
+	                                              onAccountCreated
                                               }: CreateBankAccountFormProps) {
 	const [banks, setBanks] = useState<Bank[]>([]);
 	const [bankId, setBankId] = useState("");
@@ -82,6 +84,7 @@ export default function CreateBankAccountForm({
 			setAccountNumber("");
 			setIban("");
 			setOwnerName("");
+			onAccountCreated();
 		} catch {
 			setMessage("خطا در ارتباط با سرور");
 		} finally {
