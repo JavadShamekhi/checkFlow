@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import {NextResponse} from "next/server";
 
-import { prisma } from "@/app/lib/prisma";
-import { getCompanyMembership } from "@/app/lib/authorization";
-import { createCheckSchema } from "@/app/lib/validations/check";
+import {prisma} from "@/app/lib/prisma";
+import {requireCompanyRole} from "@/app/lib/authorization";
+import {createCheckSchema} from "@/app/lib/validations/check";
 
 type ChecksRouteProps = {
 	params: Promise<{
@@ -12,17 +12,21 @@ type ChecksRouteProps = {
 
 export async function POST(
 		request: Request,
-		{ params }: ChecksRouteProps
+		{params}: ChecksRouteProps
 ) {
 	try {
-		const { companyId } = await params;
+		const {companyId} = await params;
 
-		const membership = await getCompanyMembership(companyId);
+		const access = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+			"ACCOUNTANT",
+		]);
 
-		if (!membership) {
+		if (!access.authorized) {
 			return NextResponse.json(
-					{ message: "Unauthorized" },
-					{ status: 401 }
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
@@ -36,7 +40,7 @@ export async function POST(
 						message: "Invalid input",
 						errors: result.error.flatten(),
 					},
-					{ status: 400 }
+					{status: 400}
 			);
 		}
 
@@ -64,8 +68,8 @@ export async function POST(
 
 		if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
 			return NextResponse.json(
-					{ message: "Amount must be a valid positive number" },
-					{ status: 400 }
+					{message: "Amount must be a valid positive number"},
+					{status: 400}
 			);
 		}
 
@@ -74,8 +78,8 @@ export async function POST(
 
 		if (Number.isNaN(parsedDueDate.getTime())) {
 			return NextResponse.json(
-					{ message: "Invalid due date" },
-					{ status: 400 }
+					{message: "Invalid due date"},
+					{status: 400}
 			);
 		}
 
@@ -88,8 +92,8 @@ export async function POST(
 
 		if (!bank) {
 			return NextResponse.json(
-					{ message: "Bank not found" },
-					{ status: 404 }
+					{message: "Bank not found"},
+					{status: 404}
 			);
 		}
 
@@ -105,8 +109,8 @@ export async function POST(
 
 			if (!bankAccount) {
 				return NextResponse.json(
-						{ message: "Bank account not found" },
-						{ status: 404 }
+						{message: "Bank account not found"},
+						{status: 404}
 				);
 			}
 		}
@@ -127,7 +131,7 @@ export async function POST(
 						message:
 								"A check with this Sayad ID already exists in this company",
 					},
-					{ status: 409 }
+					{status: 409}
 			);
 		}
 
@@ -139,8 +143,8 @@ export async function POST(
 
 			if (Number.isNaN(parsedHandedOverAt.getTime())) {
 				return NextResponse.json(
-						{ message: "Invalid handed over date" },
-						{ status: 400 }
+						{message: "Invalid handed over date"},
+						{status: 400}
 				);
 			}
 		}
@@ -180,31 +184,36 @@ export async function POST(
 					message: "Check created successfully",
 					check,
 				},
-				{ status: 201 }
+				{status: 201}
 		);
 	} catch (error) {
 		console.error("CREATE_CHECK_ERROR:", error);
 
 		return NextResponse.json(
-				{ message: "Something went wrong" },
-				{ status: 500 }
+				{message: "Something went wrong"},
+				{status: 500}
 		);
 	}
 }
 
 export async function GET(
 		_request: Request,
-		{ params }: ChecksRouteProps
+		{params}: ChecksRouteProps
 ) {
 	try {
-		const { companyId } = await params;
+		const {companyId} = await params;
 
-		const membership = await getCompanyMembership(companyId);
+		const access = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+			"ACCOUNTANT",
+			"VIEWER",
+		]);
 
-		if (!membership) {
+		if (!access.authorized) {
 			return NextResponse.json(
-					{ message: "Unauthorized" },
-					{ status: 401 }
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
@@ -228,8 +237,8 @@ export async function GET(
 		console.error("GET_CHECKS_ERROR:", error);
 
 		return NextResponse.json(
-				{ message: "Something went wrong" },
-				{ status: 500 }
+				{message: "Something went wrong"},
+				{status: 500}
 		);
 	}
 }
