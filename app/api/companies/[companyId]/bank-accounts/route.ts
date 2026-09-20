@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 
 import {prisma} from "@/app/lib/prisma";
-import {getCompanyMembership} from "@/app/lib/authorization";
+import {requireCompanyRole} from "@/app/lib/authorization";
 
 type BankAccountsRouteProps = {
 	params: Promise<{ companyId: string }>;
@@ -14,12 +14,17 @@ export async function GET(
 	try {
 		const {companyId} = await params;
 
-		const membership = await getCompanyMembership(companyId);
+		const access = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+			"ACCOUNTANT",
+			"VIEWER",
+		]);
 
-		if (!membership) {
+		if (!access.authorized) {
 			return NextResponse.json(
-					{message: "Unauthorized"},
-					{status: 401}
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
@@ -47,12 +52,16 @@ export async function POST(
 	try {
 		const {companyId} = await params;
 
-		const membership = await getCompanyMembership(companyId);
+		const access = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+			"ACCOUNTANT",
+		]);
 
-		if (!membership) {
+		if (!access.authorized) {
 			return NextResponse.json(
-					{message: "Unauthorized"},
-					{status: 401}
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
