@@ -24,3 +24,35 @@ export async function getCompanyMembership(
 
 	return membership;
 }
+
+export async function requireCompanyRole(
+		companyId: string,
+		allowedRoles: string[]
+) {
+	const membership = await getCompanyMembership(companyId);
+
+	if (!membership) {
+		return {
+			authorized: false,
+			status: 401,
+			message: "Unauthorized",
+			membership: null,
+		};
+	}
+
+	if (!allowedRoles.includes(membership.role)) {
+		return {
+			authorized: false,
+			status: 403,
+			message: "Forbidden",
+			membership,
+		};
+	}
+
+	return {
+		authorized: true,
+		status: 200,
+		message: null,
+		membership,
+	};
+}
