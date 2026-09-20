@@ -1,17 +1,35 @@
 "use client";
 
-import {FormEvent, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 
 type CreateCheckFormProps = {
 	companyId: string;
+	onCheckCreated: () => void;
 };
 
 type CheckType = "RECEIVABLE" | "PAYABLE";
 type PartyType = "INDIVIDUAL" | "LEGAL_ENTITY";
+type Bank = {
+	id: string;
+	name: string;
+};
+
+type BankAccount = {
+	id: string;
+	bankId: string;
+	accountNumber: string | null;
+	iban: string | null;
+	ownerName: string | null;
+	bank: {
+		id: string;
+		name: string;
+	};
+};
 
 export default function CreateCheckForm({
 	                                        companyId,
+	                                        onCheckCreated
                                         }: CreateCheckFormProps) {
 	const router = useRouter();
 
@@ -23,6 +41,9 @@ export default function CreateCheckForm({
 	const [serial, setSerial] = useState("");
 
 	// Bank
+	const [banks, setBanks] = useState<Bank[]>([]);
+	const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+
 	const [bankId, setBankId] = useState("");
 	const [bankAccountId, setBankAccountId] = useState("");
 
@@ -137,6 +158,8 @@ export default function CreateCheckForm({
 			setHandedOverAt("");
 			setDescription("");
 
+			onCheckCreated();
+
 			router.refresh();
 		} catch {
 			setError("Something went wrong");
@@ -144,6 +167,50 @@ export default function CreateCheckForm({
 			setLoading(false);
 		}
 	}
+
+	useEffect(() => {
+		async function fetchData() {
+			try {
+				const [banksResponse, accountsResponse] = await Promise.all([
+					fetch("/api/banks"),
+					fetch(`/api/companies/${companyId}/bank-accounts`),
+				]);
+
+				const banksData = await banksResponse.json();
+				const accountsData = await accountsResponse.json();
+
+				if (!banksResponse.ok) {
+					throw new Error(
+							banksData.message || "Failed to fetch banks"
+					);
+				}
+
+				if (!accountsResponse.ok) {
+					throw new Error(
+							accountsData.message || "Failed to fetch bank accounts"
+					);
+				}
+
+				setBanks(banksData.banks);
+				setBankAccounts(accountsData.bankAccounts);
+			} catch (error) {
+				console.error(error);
+			}
+		}
+
+		fetchData();
+	}, [companyId]);
+
+	function handleBankChange(value: string) {
+		setBankId(value);
+
+		// حساب انتخاب‌شده مربوط به بانک قبلی بوده
+		setBankAccountId("");
+	}
+
+	const filteredBankAccounts = bankAccounts.filter(
+			(account) => account.bankId === bankId
+	);
 
 	return (
 			<section className="mt-8 max-w-3xl rounded-lg border p-6">
@@ -261,47 +328,55 @@ export default function CreateCheckForm({
 						</h3>
 
 						<div className="mt-4 grid gap-4 md:grid-cols-2">
-							<div>
-								<label
-										htmlFor="bank-id"
-										className="mb-2 block"
-								>
-									Bank ID
+							<div className="space-y-2">
+								<label htmlFor="bankId" className="text-sm font-medium">
+									بانک
 								</label>
 
-								<input
-										id="bank-id"
-										type="text"
+								<select
+										id="bankId"
 										value={bankId}
-										onChange={(event) =>
-												setBankId(event.target.value)
-										}
-										className="w-full rounded-md border px-4 py-2"
-										placeholder="Bank ID"
+										onChange={(e) => handleBankChange(e.target.value)}
+										className="w-full rounded-md border bg-background px-3 py-2"
 										required
-								/>
+								>
+									<option value="">انتخاب بانک</option>
+
+									{banks.map((bank) => (
+											<option key={bank.id} value={bank.id}>
+												{bank.name}
+											</option>
+									))}
+								</select>
 							</div>
 
-							<div>
-								<label
-										htmlFor="bank-account-id"
-										className="mb-2 block"
-								>
-									Bank account ID
+							<div className="space-y-2">
+								<label htmlFor="bankAccountId" className="text-sm font-medium">
+									حساب بانکی
 								</label>
 
-								<input
-										id="bank-account-id"
-										type="text"
+								<select
+										id="bankAccountId"
 										value={bankAccountId}
-										onChange={(event) =>
-												setBankAccountId(
-														event.target.value
-												)
-										}
-										className="w-full rounded-md border px-4 py-2"
-										placeholder="Optional"
-								/>
+										onChange={(e) => setBankAccountId(e.target.value)}
+										className="w-full rounded-md border bg-background px-3 py-2"
+										disabled={!bankId}
+								>
+									<option value="">
+										{bankId
+												? "انتخاب حساب بانکی"
+												: "ابتدا بانک را انتخاب کنید"}
+									</option>
+
+									{filteredBankAccounts.map((account) => (
+											<option key={account.id} value={account.id}>
+												{account.accountNumber ||
+														account.iban ||
+														account.ownerName ||
+														"حساب بانکی"}
+											</option>
+									))}
+								</select>
 							</div>
 						</div>
 					</div>

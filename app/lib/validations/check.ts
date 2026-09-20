@@ -1,4 +1,4 @@
-import { z } from "zod";
+import {z} from "zod";
 
 export const createCheckSchema = z.object({
 	type: z.enum(["RECEIVABLE", "PAYABLE"]),
@@ -36,11 +36,26 @@ export const createCheckSchema = z.object({
 	amount: z
 			.string()
 			.trim()
-			.min(1, "Amount is required"),
+			.min(1, "Amount is required")
+			.refine(
+					(value) => {
+						const amount = Number(value);
+						return Number.isFinite(amount) && amount > 0;
+					},
+					{
+						message: "Amount must be greater than zero",
+					}
+			),
 
 	dueDate: z
 			.string()
-			.min(1, "Due date is required"),
+			.min(1, "Due date is required")
+			.refine(
+					(value) => !Number.isNaN(new Date(value).getTime()),
+					{
+						message: "Invalid due date",
+					}
+			),
 
 	// Issuer
 	issuerType: z

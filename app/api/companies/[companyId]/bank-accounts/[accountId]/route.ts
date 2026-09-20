@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import {NextResponse} from "next/server";
 
-import { prisma } from "@/app/lib/prisma";
-import { getCompanyMembership } from "@/app/lib/authorization";
+import {prisma} from "@/app/lib/prisma";
+import {requireCompanyRole} from "@/app/lib/authorization";
 
 type BankAccountRouteProps = {
 	params: Promise<{
@@ -12,17 +12,21 @@ type BankAccountRouteProps = {
 
 export async function DELETE(
 		_request: Request,
-		{ params }: BankAccountRouteProps
+		{params}: BankAccountRouteProps
 ) {
 	try {
-		const { companyId, accountId } = await params;
+		const {companyId, accountId} = await params;
 
-		const membership = await getCompanyMembership(companyId);
+		const access = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+			"ACCOUNTANT",
+		]);
 
-		if (!membership) {
+		if (!access.authorized) {
 			return NextResponse.json(
-					{ message: "Unauthorized" },
-					{ status: 401 }
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
@@ -35,8 +39,8 @@ export async function DELETE(
 
 		if (!bankAccount) {
 			return NextResponse.json(
-					{ message: "Bank account not found" },
-					{ status: 404 }
+					{message: "Bank account not found"},
+					{status: 404}
 			);
 		}
 
@@ -53,25 +57,28 @@ export async function DELETE(
 		console.error("DELETE_BANK_ACCOUNT_ERROR:", error);
 
 		return NextResponse.json(
-				{ message: "Something went wrong" },
-				{ status: 500 }
+				{message: "Something went wrong"},
+				{status: 500}
 		);
 	}
 }
 
 export async function PUT(
 		request: Request,
-		{ params }: BankAccountRouteProps
+		{params}: BankAccountRouteProps
 ) {
 	try {
-		const { companyId, accountId } = await params;
+		const {companyId, accountId} = await params;
 
-		const membership = await getCompanyMembership(companyId);
+		const access = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+		]);
 
-		if (!membership) {
+		if (!access.authorized) {
 			return NextResponse.json(
-					{ message: "Unauthorized" },
-					{ status: 401 }
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
@@ -84,8 +91,8 @@ export async function PUT(
 
 		if (!existingAccount) {
 			return NextResponse.json(
-					{ message: "Bank account not found" },
-					{ status: 404 }
+					{message: "Bank account not found"},
+					{status: 404}
 			);
 		}
 
@@ -100,8 +107,8 @@ export async function PUT(
 
 		if (!bankId) {
 			return NextResponse.json(
-					{ message: "Bank is required" },
-					{ status: 400 }
+					{message: "Bank is required"},
+					{status: 400}
 			);
 		}
 
@@ -113,8 +120,8 @@ export async function PUT(
 
 		if (!bank) {
 			return NextResponse.json(
-					{ message: "Bank not found" },
-					{ status: 404 }
+					{message: "Bank not found"},
+					{status: 404}
 			);
 		}
 
@@ -141,8 +148,8 @@ export async function PUT(
 		console.error("UPDATE_BANK_ACCOUNT_ERROR:", error);
 
 		return NextResponse.json(
-				{ message: "Something went wrong" },
-				{ status: 500 }
+				{message: "Something went wrong"},
+				{status: 500}
 		);
 	}
 }
