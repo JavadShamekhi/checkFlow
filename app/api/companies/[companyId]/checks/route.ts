@@ -3,12 +3,25 @@ import {NextResponse} from "next/server";
 import {prisma} from "@/app/lib/prisma";
 import {requireCompanyRole} from "@/app/lib/authorization";
 import {createCheckSchema} from "@/app/lib/validations/check";
+import {Prisma} from "@/app/generated/prisma/client";
 
 type ChecksRouteProps = {
 	params: Promise<{
 		companyId: string;
 	}>;
 };
+
+const allowedTypes =
+		["RECEIVABLE",
+			"PAYABLE"] as const;
+
+const allowedStatuses =
+		["PENDING",
+			"DUE",
+			"PAID",
+			"RECEIVED",
+			"BOUNCED",
+			"CANCELLED"] as const;
 
 export async function POST(
 		request: Request,
@@ -197,7 +210,7 @@ export async function POST(
 }
 
 export async function GET(
-		_request: Request,
+		request: Request,
 		{params}: ChecksRouteProps
 ) {
 	try {
@@ -217,21 +230,230 @@ export async function GET(
 			);
 		}
 
-		const checks = await prisma.check.findMany({
-			where: {
-				companyId,
+		const {searchParams} = new URL(request.url);
+
+		// -----------------------------------
+		// Pagination
+		// -----------------------------------
+
+		const pageParam = searchParams.get("page");
+		const limitParam = searchParams.get("limit");
+
+		const page = pageParam ? Number(pageParam) : 1;
+		const limit = limitParam ? Number(limitParam) : 20;
+
+		if (!Number.isInteger(page) || page < 1) {
+			return NextResponse.json(
+					{message: "Invalid page"},
+					{status: 400}
+			);
+		}
+
+		if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+			return NextResponse.json(
+					{message: "Invalid limit. Maximum allowed is 100",},
+					{status: 400}
+			);
+		}
+
+		// -----------------------------------
+		// Filters
+		// -----------------------------------
+
+		const sayadId = searchParams.get("sayadId")?.trim();
+		const type = searchParams.get("type");
+		const status = searchParams.get("status");
+		const bankId = searchParams.get("bankId");
+		const series = searchParams.get("series")?.trim();
+		const serial = searchParams.get("serial")?.trim();
+		const fromDate = searchParams.get("fromDate");
+		const toDate = searchParams.get("toDate");
+		const minAmount = searchParams.get("minAmount");
+		const maxAmount = searchParams.get("maxAmount");
+		const sortBy = searchParams.get("sortBy") || "dueDate";
+		const sortOrder = searchParams.get("sortOrder") || "asc";
+
+		// -----------------------------------
+		// Validate type
+		// -----------------------------------
+
+		if (type && !allowedTypes.includes(type as (typeof allowedTypes)[number])) {
+			return NextResponse.json({message: "Invalid check type"}, {status: 400});
+		}
+
+		// -----------------------------------
+		// Validate status
+		// -----------------------------------
+
+		if (status && !allowedStatuses.includes(status as (typeof allowedStatuses)[number])) {
+			return NextResponse.json({message: "Invalid check status"}, {status: 400});
+		}
+
+		const allowedSortFields = [
+			"dueDate",
+			"amount",
+			"createdAt",
+		] as const;
+
+		const allowedSortOrders = ["asc", "desc"] as const;
+
+		if (!allowedSortFields.includes(
+				sortBy as (typeof allowedSortFields)[number])) {
+			return NextResponse.json(
+					{message: "Invalid sortBy"},
+					{status: 400}
+			);
+		}
+
+		if (!allowedSortOrders.includes(
+				sortOrder as (typeof allowedSortOrders)[number])) {
+			return NextResponse.json(
+					{message: "Invalid sortOrder"},
+					{status: 400}
+			);
+		}
+
+		// -----------------------------------
+		// Build where
+		// -----------------------------------
+
+		const where: {
+			companyId: string;
+			sayadId?: { contains: string; };
+			type?: (typeof allowedTypes)[number];
+			status?: (typeof allowedStatuses)[number];
+			bankId?: string;
+			series?: { contains: string; };
+			serial?: { contains: string; };
+			dueDate?: { gte?: Date; lte?: Date; };
+			amount?: { gte?: number; lte?: number; };
+		} = {companyId,};
+
+		// Sayad ID
+		if (sayadId) {
+			where.sayadId = {contains: sayadId,};
+		}
+
+		// Type
+		if (type) {
+			where.type = type as (typeof allowedTypes)[number];
+		}
+
+		// Status
+		if (status) {
+			where.status = status as (typeof allowedStatuses)[number];
+		}
+
+		// Bank
+		if (bankId) {
+			where.bankId = bankId;
+		}
+
+		// Series
+		if (series) {
+			where.series = {contains: series,};
+		}
+
+		// Serial
+		if (serial) {
+			where.serial = {contains: serial,};
+		}
+		// -----------------------------------
+		// Date filters
+		// -----------------------------------
+		if (fromDate || toDate) {
+			where.dueDate = {};
+			if (fromDate) {
+				const parsedFromDate = new Date(fromDate);
+				if (Number.isNaN(parsedFromDate.getTime())) {
+					return NextResponse.json({message: "Invalid fromDate"}, {status: 400});
+				}
+				where.dueDate.gte = parsedFromDate;
+			}
+			if (toDate) {
+				const parsedToDate = new Date(toDate);
+				if (Number.isNaN(parsedToDate.getTime())) {
+					return NextResponse.json({message: "Invalid toDate"}, {status: 400});
+				}
+				parsedToDate.setHours(23, 59, 59, 999);
+				where.dueDate.lte = parsedToDate;
+			}
+		}
+
+		// -----------------------------------
+		// Amount filters
+		// -----------------------------------
+
+		if (minAmount || maxAmount) {
+			where.amount = {};
+			if (minAmount) {
+				const parsedMinAmount = Number(minAmount);
+				if (!Number.isFinite(parsedMinAmount) || parsedMinAmount < 0) {
+					return NextResponse.json({message: "Invalid minAmount"}, {status: 400});
+				}
+				where.amount.gte = parsedMinAmount;
+			}
+			if (maxAmount) {
+				const parsedMaxAmount = Number(maxAmount);
+				if (!Number.isFinite(parsedMaxAmount) || parsedMaxAmount < 0) {
+					return NextResponse.json({message: "Invalid maxAmount"}, {status: 400});
+				}
+				where.amount.lte = parsedMaxAmount;
+			}
+		}
+
+		// -----------------------------------
+		// Pagination
+		// -----------------------------------
+
+		const skip = (page - 1) * limit;
+
+		// -----------------------------------
+		// Sort
+		// -----------------------------------
+
+		const orderBy: Prisma.CheckOrderByWithRelationInput[] = [
+			{
+				[sortBy]: sortOrder,
 			},
-			orderBy: {
-				dueDate: "asc",
+			{
+				id: "asc",
 			},
+		];
+
+		// -----------------------------------
+		// Get checks + total count
+		// -----------------------------------
+
+		const [checks, total] = await Promise.all([prisma.check.findMany({
+			where,
+			orderBy,
+			skip,
+			take: limit,
 			include: {
 				bank: true,
-				bankAccount: true,
+				bankAccount: {
+					include: {
+						bank: true,
+					},
+				},
 			},
-		});
+		}),
+			prisma.check.count({
+				where,
+			}),
+		]);
+
+		const totalPages = Math.ceil(total / limit);
 
 		return NextResponse.json({
 			checks,
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPages,
+			},
 		});
 	} catch (error) {
 		console.error("GET_CHECKS_ERROR:", error);
