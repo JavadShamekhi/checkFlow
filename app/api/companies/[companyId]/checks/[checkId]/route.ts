@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { requireCompanyRole } from "@/app/lib/authorization";
-import { createCheckSchema } from "@/app/lib/validations/check";
+import {NextResponse} from "next/server";
+import {prisma} from "@/app/lib/prisma";
+import {requireCompanyRole} from "@/app/lib/authorization";
+import {createCheckSchema} from "@/app/lib/validations/check";
 
 type CheckRouteProps = {
 	params: Promise<{
@@ -12,10 +12,10 @@ type CheckRouteProps = {
 
 export async function PUT(
 		request: Request,
-		{ params }: CheckRouteProps
+		{params}: CheckRouteProps
 ) {
 	try {
-		const { companyId, checkId } = await params;
+		const {companyId, checkId} = await params;
 
 		const access = await requireCompanyRole(companyId, [
 			"OWNER",
@@ -25,8 +25,8 @@ export async function PUT(
 
 		if (!access.authorized) {
 			return NextResponse.json(
-					{ message: access.message },
-					{ status: access.status }
+					{message: access.message},
+					{status: access.status}
 			);
 		}
 
@@ -39,8 +39,8 @@ export async function PUT(
 
 		if (!existingCheck) {
 			return NextResponse.json(
-					{ message: "Check not found" },
-					{ status: 404 }
+					{message: "Check not found"},
+					{status: 404}
 			);
 		}
 
@@ -54,7 +54,7 @@ export async function PUT(
 						message: "Validation failed",
 						errors: validation.error.flatten(),
 					},
-					{ status: 400 }
+					{status: 400}
 			);
 		}
 
@@ -64,8 +64,8 @@ export async function PUT(
 
 		if (!Number.isFinite(amount) || amount <= 0) {
 			return NextResponse.json(
-					{ message: "Amount must be greater than zero" },
-					{ status: 400 }
+					{message: "Amount must be greater than zero"},
+					{status: 400}
 			);
 		}
 
@@ -73,8 +73,8 @@ export async function PUT(
 
 		if (Number.isNaN(dueDate.getTime())) {
 			return NextResponse.json(
-					{ message: "Invalid due date" },
-					{ status: 400 }
+					{message: "Invalid due date"},
+					{status: 400}
 			);
 		}
 
@@ -86,8 +86,8 @@ export async function PUT(
 
 		if (!bank) {
 			return NextResponse.json(
-					{ message: "Bank not found" },
-					{ status: 404 }
+					{message: "Bank not found"},
+					{status: 404}
 			);
 		}
 
@@ -106,7 +106,7 @@ export async function PUT(
 							message:
 									"Bank account not found or does not belong to the selected bank",
 						},
-						{ status: 400 }
+						{status: 400}
 				);
 			}
 		}
@@ -128,7 +128,7 @@ export async function PUT(
 							message:
 									"A check with this Sayad ID already exists in this company",
 						},
-						{ status: 409 }
+						{status: 409}
 				);
 			}
 		}
@@ -140,8 +140,8 @@ export async function PUT(
 
 			if (Number.isNaN(handedOverAt.getTime())) {
 				return NextResponse.json(
-						{ message: "Invalid handover date" },
-						{ status: 400 }
+						{message: "Invalid handover date"},
+						{status: 400}
 				);
 			}
 		}
@@ -182,8 +182,61 @@ export async function PUT(
 		console.error("UPDATE_CHECK_ERROR:", error);
 
 		return NextResponse.json(
-				{ message: "Something went wrong" },
-				{ status: 500 }
+				{message: "Something went wrong"},
+				{status: 500}
+		);
+	}
+}
+
+export async function DELETE(
+		request: Request,
+		{params}: { params: Promise<{ companyId: string; checkId: string }> }
+) {
+	try {
+		const {companyId, checkId} = await params;
+
+		const authorization = await requireCompanyRole(companyId, [
+			"OWNER",
+			"ADMIN",
+		]);
+
+		if (!authorization.authorized) {
+			return NextResponse.json(
+					{message: authorization.message},
+					{status: authorization.status}
+			);
+		}
+
+		const check = await prisma.check.findFirst({
+			where: {
+				id: checkId,
+				companyId,
+			},
+		});
+
+		if (!check) {
+			return NextResponse.json(
+					{message: "Check not found"},
+					{status: 404}
+			);
+		}
+
+		await prisma.check.delete({
+			where: {
+				id: checkId,
+			},
+		});
+
+		return NextResponse.json(
+				{message: "Check deleted successfully"},
+				{status: 200}
+		);
+	} catch (error) {
+		console.error("DELETE_CHECK_ERROR:", error);
+
+		return NextResponse.json(
+				{message: "Something went wrong"},
+				{status: 500}
 		);
 	}
 }
