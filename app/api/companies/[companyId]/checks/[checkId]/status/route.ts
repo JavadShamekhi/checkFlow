@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {prisma} from "@/app/lib/prisma";
 import {requireCompanyRole} from "@/app/lib/authorization";
+import {canTransitionCheckStatus} from "@/app/lib/checks/status-transition";
 
 const allowedStatuses = [
 	"PENDING",
@@ -62,6 +63,18 @@ export async function PATCH(
 			return NextResponse.json(
 					{message: "Check not found"},
 					{status: 404}
+			);
+		}
+
+		const isValidTransition = canTransitionCheckStatus(
+				check.status,
+				status
+		);
+
+		if (!isValidTransition) {
+			return NextResponse.json(
+					{message: `Cannot change check status from ${check.status} to ${status}`,},
+					{status: 400}
 			);
 		}
 
