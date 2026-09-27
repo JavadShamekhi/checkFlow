@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {beforeEach, describe, expect, it, vi} from "vitest";
 
 vi.mock("./get-due-reminders", () => ({
 	getDueReminders: vi.fn(),
@@ -8,9 +8,9 @@ vi.mock("@/app/lib/notifications/notification-service", () => ({
 	sendNotification: vi.fn(),
 }));
 
-import { getDueReminders } from "./get-due-reminders";
-import { sendNotification } from "@/app/lib/notifications/notification-service";
-import { processDueReminders } from "./process-due-reminders";
+import {getDueReminders} from "./get-due-reminders";
+import {sendNotification} from "@/app/lib/notifications/notification-service";
+import {processDueReminders} from "./process-due-reminders";
 
 const getDueRemindersMock = vi.mocked(getDueReminders);
 const sendNotificationMock = vi.mocked(sendNotification);
@@ -22,9 +22,9 @@ describe("processDueReminders", () => {
 
 	it("processes all due reminders successfully", async () => {
 		const reminders = [
-			{ id: "reminder-1" },
-			{ id: "reminder-2" },
-			{ id: "reminder-3" },
+			{id: "reminder-1"},
+			{id: "reminder-2"},
+			{id: "reminder-3"},
 		];
 
 		getDueRemindersMock.mockResolvedValue(reminders as never);
@@ -59,9 +59,9 @@ describe("processDueReminders", () => {
 
 	it("continues processing when one reminder fails", async () => {
 		const reminders = [
-			{ id: "reminder-1" },
-			{ id: "reminder-2" },
-			{ id: "reminder-3" },
+			{id: "reminder-1"},
+			{id: "reminder-2"},
+			{id: "reminder-3"},
 		];
 
 		getDueRemindersMock.mockResolvedValue(reminders as never);
@@ -92,6 +92,27 @@ describe("processDueReminders", () => {
 		expect(result).toEqual({
 			total: 0,
 			sent: 0,
+			failed: 0,
+		});
+	});
+
+	it("does not count a reminder as sent when it was already claimed", async () => {
+		const reminders = [
+			{id: "reminder-1"},
+			{id: "reminder-2"},
+		];
+
+		getDueRemindersMock.mockResolvedValue(reminders as never);
+
+		sendNotificationMock
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({} as never);
+
+		const result = await processDueReminders();
+
+		expect(result).toEqual({
+			total: 2,
+			sent: 1,
 			failed: 0,
 		});
 	});

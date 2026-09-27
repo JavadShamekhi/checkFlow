@@ -1,14 +1,48 @@
-import { prisma } from "@/app/lib/prisma";
+import {prisma} from "@/app/lib/prisma";
+
+const MAX_ATTEMPTS = 3;
 
 export async function sendNotification(reminderId: string) {
+	const reminder = await prisma.checkReminder.findUnique({
+		where: {
+			id: reminderId,
+		},
+	});
+
+	if (!reminder) {
+		throw new Error("Reminder not found");
+	}
+
+	if (
+			reminder.status === "SENT" ||
+			reminder.status === "PROCESSING"
+	) {
+		return reminder;
+	}
+
+	if (reminder.attempts >= MAX_ATTEMPTS) {
+		return reminder;
+	}
+
+	const processingStartedAt = new Date();
+
 	const claimedReminder = await prisma.checkReminder.updateMany({
 		where: {
 			id: reminderId,
-			status: "PENDING",
+			status: {
+				in: ["PENDING", "FAILED"],
+			},
+			attempts: {
+				lt: MAX_ATTEMPTS,
+			},
 		},
 		data: {
-			status: "SENT",
-			sentAt: new Date(),
+			status: "PROCESSING",
+			attempts: {
+				increment: 1,
+			},
+			lastAttemptAt: processingStartedAt,
+			processingStartedAt,
 		},
 	});
 
@@ -16,9 +50,34 @@ export async function sendNotification(reminderId: string) {
 		return null;
 	}
 
-	return prisma.checkReminder.findUnique({
-		where: {
-			id: reminderId,
-		},
-	});
+	try {
+		if (reminder.channel !== "IN_APP") {
+			throw new Error(
+					`Unsupported notification channel: ${reminder.channel}`
+			);
+		}
+
+		return await prisma.checkReminder.update({
+			where: {
+				id: reminderId,
+			},
+			data: {
+				status: "SENT",
+				sentAt: new Date(),
+				processingStartedAt: null,
+			},
+		});
+	} catch (error) {
+		await prisma.checkReminder.update({
+			where: {
+				id: reminderId,
+			},
+			data: {
+				status: "FAILED",
+				processingStartedAt: null,
+			},
+		});
+
+		throw error;
+	}
 }
