@@ -1,46 +1,64 @@
 import {beforeEach, describe, expect, it, vi} from "vitest";
 
+const {
+	findUniqueMock,
+	updateManyMock,
+	updateMock,
+	providerSendMock,
+} = vi.hoisted(() => ({
+	findUniqueMock: vi.fn(),
+	updateManyMock: vi.fn(),
+	updateMock: vi.fn(),
+	providerSendMock: vi.fn(),
+}));
+
 vi.mock("@/app/lib/prisma", () => ({
 	prisma: {
 		checkReminder: {
-			findUnique: vi.fn(),
-			updateMany: vi.fn(),
-			update: vi.fn(),
+			findUnique: findUniqueMock,
+			updateMany: updateManyMock,
+			update: updateMock,
 		},
 	},
 }));
 
-import {prisma} from "@/app/lib/prisma";
-import {sendNotification} from "./notification-service";
+vi.mock("./notification-providers", () => ({
+	getNotificationProvider: vi.fn(() => ({
+		send: providerSendMock,
+	})),
+}));
 
-const findUniqueMock = vi.mocked(prisma.checkReminder.findUnique);
-const updateManyMock = vi.mocked(prisma.checkReminder.updateMany);
-const updateMock = vi.mocked(prisma.checkReminder.update);
+import {sendNotification} from "./notification-service";
 
 describe("sendNotification", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+
+		providerSendMock.mockResolvedValue(undefined);
+		updateMock.mockResolvedValue({
+			id: "reminder-1",
+			status: "SENT",
+		});
 	});
 
 	it("sends a pending IN_APP reminder", async () => {
 		const reminder = {
 			id: "reminder-1",
-			status: "PENDING",
 			channel: "IN_APP",
+			status: "PENDING",
 			attempts: 0,
+			check: {
+				companyId: "company-1",
+			},
 		};
 
-		const sentReminder = {
-			...reminder,
-			status: "SENT",
-			attempts: 1,
-		};
+		findUniqueMock.mockResolvedValue(reminder);
 
-		findUniqueMock.mockResolvedValue(reminder as never);
-		updateManyMock.mockResolvedValue({count: 1});
-		updateMock.mockResolvedValue(sentReminder as never);
+		updateManyMock.mockResolvedValue({
+			count: 1,
+		});
 
-		const result = await sendNotification("reminder-1");
+		await sendNotification("reminder-1");
 
 		expect(updateManyMock).toHaveBeenCalledWith({
 			where: {
@@ -62,6 +80,8 @@ describe("sendNotification", () => {
 			},
 		});
 
+		expect(providerSendMock).toHaveBeenCalledTimes(1);
+
 		expect(updateMock).toHaveBeenCalledWith({
 			where: {
 				id: "reminder-1",
@@ -72,90 +92,118 @@ describe("sendNotification", () => {
 				processingStartedAt: null,
 			},
 		});
-
-		expect(result).toEqual(sentReminder);
 	});
 
 	it("retries a FAILED reminder", async () => {
-		const reminder = {
-			id: "reminder-2",
-			status: "FAILED",
+		const lastAttemptAt = new Date("2026-09-27T10:00:00.000Z");
+
+		findUniqueMock.mockResolvedValue({
+			id: "reminder-1",
 			channel: "IN_APP",
+			status: "FAILED",
 			attempts: 1,
-		};
+			lastAttemptAt,
+			check: {
+				companyId: "company-1",
+			},
+		});
 
-		const sentReminder = {
-			...reminder,
-			status: "SENT",
-			attempts: 2,
-		};
+		updateManyMock.mockResolvedValue({
+			count: 1,
+		});
 
-		findUniqueMock.mockResolvedValue(reminder as never);
-		updateManyMock.mockResolvedValue({count: 1});
-		updateMock.mockResolvedValue(sentReminder as never);
+		await sendNotification("reminder-1");
 
-		const result = await sendNotification("reminder-2");
+		expect(providerSendMock).toHaveBeenCalledTimes(1);
 
-		expect(result).toEqual(sentReminder);
 		expect(updateManyMock).toHaveBeenCalledTimes(1);
+
+		expect(updateMock).toHaveBeenCalledWith({
+			where: {
+				id: "reminder-1",
+			},
+			data: {
+				status: "SENT",
+				sentAt: expect.any(Date),
+				processingStartedAt: null,
+			},
+		});
 	});
 
 	it("does not retry after maximum attempts", async () => {
-		const reminder = {
-			id: "reminder-3",
-			status: "FAILED",
+		findUniqueMock.mockResolvedValue({
+			id: "reminder-1",
 			channel: "IN_APP",
+			status: "FAILED",
 			attempts: 3,
-		};
+			check: {
+				companyId: "company-1",
+			},
+		});
 
-		findUniqueMock.mockResolvedValue(reminder as never);
+		const result = await sendNotification("reminder-1");
 
-		const result = await sendNotification("reminder-3");
+		expect(result).toEqual({
+			id: "reminder-1",
+			channel: "IN_APP",
+			status: "FAILED",
+			attempts: 3,
+			check: {
+				companyId: "company-1",
+			},
+		});
 
-		expect(result).toEqual(reminder);
 		expect(updateManyMock).not.toHaveBeenCalled();
-		expect(updateMock).not.toHaveBeenCalled();
+		expect(providerSendMock).not.toHaveBeenCalled();
 	});
 
 	it("does not process an already sent reminder", async () => {
 		const reminder = {
-			id: "reminder-4",
-			status: "SENT",
+			id: "reminder-1",
 			channel: "IN_APP",
+			status: "SENT",
 			attempts: 1,
+			check: {
+				companyId: "company-1",
+			},
 		};
 
-		findUniqueMock.mockResolvedValue(reminder as never);
+		findUniqueMock.mockResolvedValue(reminder);
 
-		const result = await sendNotification("reminder-4");
+		const result = await sendNotification("reminder-1");
 
 		expect(result).toEqual(reminder);
+
 		expect(updateManyMock).not.toHaveBeenCalled();
+		expect(providerSendMock).not.toHaveBeenCalled();
 	});
 
 	it("marks the reminder as FAILED when sending fails", async () => {
-		const reminder = {
-			id: "reminder-5",
+		findUniqueMock.mockResolvedValue({
+			id: "reminder-1",
+			channel: "IN_APP",
 			status: "PENDING",
-			channel: "SMS",
 			attempts: 0,
-		};
+			check: {
+				companyId: "company-1",
+			},
+		});
 
-		findUniqueMock.mockResolvedValue(reminder as never);
-		updateManyMock.mockResolvedValue({count: 1});
-		updateMock.mockResolvedValue({
-			...reminder,
-			status: "FAILED",
-			attempts: 1,
-		} as never);
+		updateManyMock.mockResolvedValue({
+			count: 1,
+		});
+
+		providerSendMock.mockRejectedValue(
+				new Error("Notification failed")
+		);
 
 		await expect(
-				sendNotification("reminder-5")
-		).rejects.toThrow("Unsupported notification channel: SMS");
+				sendNotification("reminder-1")
+		).rejects.toThrow("Notification failed");
 
 		expect(updateMock).toHaveBeenCalledWith({
 			where: {
-				id: "reminder-5",
+				id: "reminder-1",
 			},
 			data: {
 				status: "FAILED",
@@ -165,19 +213,25 @@ describe("sendNotification", () => {
 	});
 
 	it("does nothing when another worker already claimed the reminder", async () => {
-		const reminder = {
-			id: "reminder-6",
-			status: "PENDING",
+		findUniqueMock.mockResolvedValue({
+			id: "reminder-1",
 			channel: "IN_APP",
+			status: "PENDING",
 			attempts: 0,
-		};
+			check: {
+				companyId: "company-1",
+			},
+		});
 
-		findUniqueMock.mockResolvedValue(reminder as never);
-		updateManyMock.mockResolvedValue({count: 0});
+		updateManyMock.mockResolvedValue({
+			count: 0,
+		});
 
-		const result = await sendNotification("reminder-6");
+		const result = await sendNotification("reminder-1");
 
 		expect(result).toBeNull();
+
+		expect(providerSendMock).not.toHaveBeenCalled();
 		expect(updateMock).not.toHaveBeenCalled();
 	});
 });

@@ -1,4 +1,5 @@
-import {prisma} from "@/app/lib/prisma";
+import { prisma } from "@/app/lib/prisma";
+import { getNotificationProvider } from "./notification-providers";
 
 const MAX_ATTEMPTS = 3;
 
@@ -51,11 +52,9 @@ export async function sendNotification(reminderId: string) {
 	}
 
 	try {
-		if (reminder.channel !== "IN_APP") {
-			throw new Error(
-					`Unsupported notification channel: ${reminder.channel}`
-			);
-		}
+		const provider = getNotificationProvider(reminder.channel);
+
+		await provider.send(reminder);
 
 		return await prisma.checkReminder.update({
 			where: {
