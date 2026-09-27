@@ -1,5 +1,5 @@
-import { getDueReminders } from "./get-due-reminders";
-import { sendNotification } from "@/app/lib/notifications/notification-service";
+import {getDueReminders} from "./get-due-reminders";
+import {sendNotification} from "@/app/lib/notifications/notification-service";
 
 export async function processDueReminders(now = new Date()) {
 	const reminders = await getDueReminders(now);
@@ -9,7 +9,12 @@ export async function processDueReminders(now = new Date()) {
 
 	for (const reminder of reminders) {
 		try {
-			await sendNotification(reminder.id);
+			const result = await sendNotification(reminder.id);
+
+			if (result === null) {
+				continue;
+			}
+
 			sent++;
 		} catch {
 			failed++;
