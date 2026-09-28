@@ -3,6 +3,7 @@
 import {useEffect, useState} from "react";
 import CheckStatusChart from "@/app/components/CheckStatusChart";
 import FinancialChart from "@/app/components/FinancialChart";
+import NotificationBell from "@/app/components/NotificationBell";
 
 type DashboardData = {
 	summary: {
@@ -140,14 +141,18 @@ export default function DashboardClient({
 	return (
 			<div className="space-y-8">
 				{/* Header */}
-				<div>
-					<h1 className="text-2xl font-bold">
-						داشبورد
-					</h1>
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h1 className="text-2xl font-bold">
+							داشبورد
+						</h1>
 
-					<p className="mt-1 text-sm text-muted-foreground">
-						نمای کلی وضعیت چک‌های شرکت
-					</p>
+						<p className="mt-1 text-sm text-muted-foreground">
+							نمای کلی وضعیت چک‌های شرکت
+						</p>
+					</div>
+
+					<NotificationBell/>
 				</div>
 
 				{/* Summary Cards */}
