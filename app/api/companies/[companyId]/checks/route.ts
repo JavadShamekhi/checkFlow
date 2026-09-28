@@ -4,6 +4,7 @@ import {prisma} from "@/app/lib/prisma";
 import {requireCompanyRole} from "@/app/lib/authorization";
 import {createCheckSchema} from "@/app/lib/validations/check";
 import {Prisma} from "@/app/generated/prisma/client";
+import {createCheckReminders} from "@/app/lib/reminders/create-check-reminders";
 
 type ChecksRouteProps = {
 	params: Promise<{
@@ -191,6 +192,12 @@ export async function POST(
 				description: description || null,
 			},
 		});
+
+		try {
+			await createCheckReminders(check);
+		} catch (error) {
+			console.error("CREATE_CHECK_REMINDERS_ERROR:", error);
+		}
 
 		return NextResponse.json(
 				{
