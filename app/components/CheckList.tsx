@@ -14,7 +14,7 @@ type Pagination = {
 	limit: number;
 	total: number;
 	totalPages: number;
-}
+};
 
 type PageItem = number | "...";
 
@@ -88,12 +88,14 @@ export default function CheckList({
 	const [checks, setChecks] = useState<Check[]>([]);
 	const [page, setPage] = useState(1);
 	const [limit, setLimit] = useState(20);
+
 	const [pagination, setPagination] = useState<Pagination>({
 		page: 1,
 		limit: 20,
 		total: 0,
 		totalPages: 0,
 	});
+
 	const [sort, setSort] = useState<SortOption>({
 		sortBy: "dueDate",
 		sortOrder: "asc",
@@ -125,7 +127,6 @@ export default function CheckList({
 		async function fetchBanks() {
 			try {
 				const response = await fetch("/api/banks");
-
 				const data = await response.json();
 
 				if (!response.ok) {
@@ -226,15 +227,13 @@ export default function CheckList({
 					);
 				}
 
-				const queryString =
-						searchParams.toString();
+				const queryString = searchParams.toString();
 
 				const url = queryString
 						? `/api/companies/${companyId}/checks?${queryString}`
 						: `/api/companies/${companyId}/checks`;
 
 				const response = await fetch(url);
-
 				const data = await response.json();
 
 				if (!response.ok) {
@@ -254,7 +253,14 @@ export default function CheckList({
 		}
 
 		fetchChecks();
-	}, [companyId, refreshKey, appliedFilters, page, sort, limit]);
+	}, [
+		companyId,
+		refreshKey,
+		appliedFilters,
+		page,
+		sort,
+		limit,
+	]);
 
 	function handleFilterChange(
 			field: keyof CheckFilters,
@@ -291,14 +297,12 @@ export default function CheckList({
 	}
 
 	const activeFilterCount =
-			Object.values(appliedFilters).filter(
-					Boolean
-			).length;
+			Object.values(appliedFilters).filter(Boolean).length;
 
 	function getBankName(bankId: string) {
 		return (
-				banks.find((bank) => bank.id === bankId)
-						?.name ?? bankId
+				banks.find((bank) => bank.id === bankId)?.name ??
+				bankId
 		);
 	}
 
@@ -331,14 +335,17 @@ export default function CheckList({
 			}
 
 			const newTotal = Math.max(
-					pagination.total - 1, 0
+					pagination.total - 1,
+					0
 			);
 
 			const newTotalPages = Math.max(
 					Math.ceil(newTotal / limit),
+					0
 			);
 
-			const shouldGoToPreviousPage = checks.length === 1 && page > 1;
+			const shouldGoToPreviousPage =
+					checks.length === 1 && page > 1;
 
 			if (shouldGoToPreviousPage) {
 				setPage((currentPage) => currentPage - 1);
@@ -357,7 +364,6 @@ export default function CheckList({
 				total: newTotal,
 				totalPages: newTotalPages,
 			}));
-
 		} catch (error) {
 			console.error(error);
 			setError("خطا در حذف چک");
@@ -457,26 +463,27 @@ export default function CheckList({
 	}
 
 	return (
-			<div className="space-y-6" dir="rtl">
+			<div
+					className="space-y-6 text-[#2E1065]"
+					dir="rtl"
+			>
 				{/* Filter Header */}
-				<div className="rounded-lg border">
+				<div className="overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white shadow-sm">
 					<button
 							type="button"
 							onClick={() =>
-									setIsFilterOpen(
-											(current) => !current
-									)
+									setIsFilterOpen((current) => !current)
 							}
-							className="flex w-full items-center justify-between p-5 text-right hover:bg-muted/30"
+							className="flex w-full items-center justify-between p-5 text-right transition hover:bg-[#F5F3FF] cursor-pointer"
 					>
 						<div>
 							<div className="flex items-center gap-2">
-								<h2 className="text-xl font-semibold">
+								<h2 className="text-xl font-semibold text-[#4C1D95]">
 									فیلتر چک‌ها
 								</h2>
 
 								{activeFilterCount > 0 && (
-										<span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+										<span className="rounded-full bg-[#6D28D9] px-2.5 py-0.5 text-xs font-medium text-white">
                   {activeFilterCount.toLocaleString(
 		                  "fa-IR"
                   )}
@@ -484,24 +491,24 @@ export default function CheckList({
 								)}
 							</div>
 
-							<p className="mt-1 text-sm text-muted-foreground">
+							<p className="mt-1 text-sm text-[#7C6AA8]">
 								جستجو و فیلتر چک‌های ثبت‌شده
 							</p>
 						</div>
 
-						<span className="text-xl">
+						<span
+								className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F3FF] text-xl font-medium text-[#6D28D9]">
             {isFilterOpen ? "−" : "+"}
           </span>
 					</button>
 
 					{isFilterOpen && (
-							<div className="border-t p-5">
-
+							<div className="border-t border-[#E9D5FF] bg-[#FCFAFF] p-5">
 								{/* Sort */}
 								<div className="mb-5 max-w-sm">
 									<label
 											htmlFor="sort"
-											className="mb-1 block text-sm font-medium"
+											className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 									>
 										مرتب‌سازی
 									</label>
@@ -510,10 +517,11 @@ export default function CheckList({
 											id="sort"
 											value={`${sort.sortBy}-${sort.sortOrder}`}
 											onChange={(event) => {
-												const [sortBy, sortOrder] = event.target.value.split("-") as [
-													SortBy,
-													SortOrder
-												];
+												const [sortBy, sortOrder] =
+														event.target.value.split("-") as [
+															SortBy,
+															SortOrder
+														];
 
 												setPage(1);
 
@@ -522,7 +530,7 @@ export default function CheckList({
 													sortOrder,
 												});
 											}}
-											className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+											className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 									>
 										<option value="dueDate-asc">
 											نزدیک‌ترین سررسید
@@ -556,7 +564,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="sayadId"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											شناسه صیاد
 										</label>
@@ -574,7 +582,7 @@ export default function CheckList({
 														)
 												}
 												placeholder="۱۶ رقم شناسه صیاد"
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none placeholder:text-[#A78BCA] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 
@@ -582,7 +590,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="type"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											نوع چک
 										</label>
@@ -596,16 +604,12 @@ export default function CheckList({
 																event.target.value
 														)
 												}
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										>
-											<option value="">
-												همه
-											</option>
-
+											<option value="">همه</option>
 											<option value="RECEIVABLE">
 												دریافتی
 											</option>
-
 											<option value="PAYABLE">
 												پرداختی
 											</option>
@@ -616,7 +620,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="status"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											وضعیت
 										</label>
@@ -630,11 +634,9 @@ export default function CheckList({
 																event.target.value
 														)
 												}
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										>
-											<option value="">
-												همه
-											</option>
+											<option value="">همه</option>
 
 											{statuses.map((status) => (
 													<option
@@ -651,7 +653,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="bankId"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											بانک
 										</label>
@@ -665,7 +667,7 @@ export default function CheckList({
 																event.target.value
 														)
 												}
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										>
 											<option value="">
 												همه بانک‌ها
@@ -686,7 +688,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="series"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											سری
 										</label>
@@ -702,7 +704,7 @@ export default function CheckList({
 														)
 												}
 												placeholder="سری چک"
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none placeholder:text-[#A78BCA] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 
@@ -710,7 +712,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="serial"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											سریال
 										</label>
@@ -726,7 +728,7 @@ export default function CheckList({
 														)
 												}
 												placeholder="سریال چک"
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none placeholder:text-[#A78BCA] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 
@@ -734,7 +736,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="fromDate"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											از تاریخ سررسید
 										</label>
@@ -749,7 +751,7 @@ export default function CheckList({
 																event.target.value
 														)
 												}
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 
@@ -757,7 +759,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="toDate"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											تا تاریخ سررسید
 										</label>
@@ -772,7 +774,7 @@ export default function CheckList({
 																event.target.value
 														)
 												}
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 
@@ -780,7 +782,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="minAmount"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											حداقل مبلغ
 										</label>
@@ -797,7 +799,7 @@ export default function CheckList({
 														)
 												}
 												placeholder="حداقل مبلغ"
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none placeholder:text-[#A78BCA] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 
@@ -805,7 +807,7 @@ export default function CheckList({
 									<div>
 										<label
 												htmlFor="maxAmount"
-												className="mb-1 block text-sm font-medium"
+												className="mb-1.5 block text-sm font-medium text-[#5B21B6]"
 										>
 											حداکثر مبلغ
 										</label>
@@ -822,7 +824,7 @@ export default function CheckList({
 														)
 												}
 												placeholder="حداکثر مبلغ"
-												className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+												className="w-full rounded-lg border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm text-[#2E1065] outline-none placeholder:text-[#A78BCA] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 										/>
 									</div>
 								</div>
@@ -833,7 +835,7 @@ export default function CheckList({
 											type="button"
 											onClick={handleApplyFilters}
 											disabled={loading}
-											className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+											className="rounded-lg bg-[#4C1D95] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
 									>
 										اعمال فیلتر
 									</button>
@@ -842,10 +844,9 @@ export default function CheckList({
 											type="button"
 											onClick={handleClearFilters}
 											disabled={
-													loading &&
-													checks.length === 0
+													loading && checks.length === 0
 											}
-											className="rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+											className="rounded-lg border border-[#C4B5FD] bg-white px-5 py-2.5 text-sm font-medium text-[#5B21B6] transition hover:bg-[#F5F3FF] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
 									>
 										پاک کردن همه
 									</button>
@@ -857,9 +858,9 @@ export default function CheckList({
 				{/* Active Filters */}
 				{activeFilterCount > 0 && (
 						<div className="flex flex-wrap items-center gap-2">
-						<span className="text-sm font-medium">
-						فیلترهای فعال:
-						</span>
+          <span className="text-sm font-medium text-[#5B21B6]">
+            فیلترهای فعال:
+          </span>
 
 							{appliedFilters.sayadId && (
 									<button
@@ -867,7 +868,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("sayadId")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										شناسه صیاد:{" "}
 										{appliedFilters.sayadId} ×
@@ -880,7 +881,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("type")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										نوع:{" "}
 										{appliedFilters.type ===
@@ -897,7 +898,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("status")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										وضعیت:{" "}
 										{
@@ -915,7 +916,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("bankId")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										بانک:{" "}
 										{getBankName(
@@ -931,7 +932,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("series")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										سری:{" "}
 										{appliedFilters.series} ×
@@ -944,7 +945,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("serial")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										سریال:{" "}
 										{appliedFilters.serial} ×
@@ -957,7 +958,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("fromDate")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										از:{" "}
 										{appliedFilters.fromDate} ×
@@ -970,7 +971,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("toDate")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										تا:{" "}
 										{appliedFilters.toDate} ×
@@ -983,7 +984,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("minAmount")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										حداقل:{" "}
 										{Number(
@@ -999,7 +1000,7 @@ export default function CheckList({
 											onClick={() =>
 													removeFilter("maxAmount")
 											}
-											className="rounded-full border bg-muted px-3 py-1 text-xs hover:bg-muted/70"
+											className="rounded-full border border-[#C4B5FD] bg-[#F5F3FF] px-3 py-1 text-xs text-[#5B21B6] transition hover:bg-[#EDE9FE] cursor-pointer"
 									>
 										حداکثر:{" "}
 										{Number(
@@ -1009,227 +1010,251 @@ export default function CheckList({
 									</button>
 							)}
 						</div>
-				)
-				}
+				)}
 
-				{/* Error */
-				}
-				{
-						error && (
-								<p className="text-sm text-red-500">
-									{error}
-								</p>
-						)
-				}
+				{/* Error */}
+				{error && (
+						<div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+							{error}
+						</div>
+				)}
 
-				{/* Loading */
-				}
-				{
-						loading && checks.length === 0 && (
-								<p>در حال دریافت چک‌ها...</p>
-						)
-				}
+				{/* Loading */}
+				{loading && checks.length === 0 && (
+						<div className="rounded-xl border border-[#DDD6FE] bg-white p-8 text-center">
+							<p className="text-sm text-[#7C6AA8]">
+								در حال دریافت چک‌ها...
+							</p>
+						</div>
+				)}
 
-				{/* Empty */
-				}
-				{
-						!loading && checks.length === 0 && (
-								<div className="rounded-lg border p-6 text-center">
-									<p className="text-muted-foreground">
-										چکی با این مشخصات پیدا نشد.
-									</p>
-								</div>
-						)
-				}
+				{/* Empty */}
+				{!loading && checks.length === 0 && (
+						<div className="rounded-2xl border border-[#DDD6FE] bg-white p-10 text-center shadow-sm">
+							<div
+									className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F5F3FF] text-2xl text-[#6D28D9]">
+								✓
+							</div>
 
-				{/* Check List */
-				}
-				{
-						checks.length > 0 && (
-								<div className="space-y-4">
-									<div className="flex items-center justify-between">
-										<h2 className="text-xl font-semibold">
-											چک‌های ثبت‌شده
-										</h2>
+							<p className="mt-4 font-medium text-[#4C1D95]">
+								چکی با این مشخصات پیدا نشد.
+							</p>
 
-										<span className="text-sm text-muted-foreground">
+							<p className="mt-2 text-sm text-[#8B7AAE]">
+								فیلترها را تغییر دهید یا پاک کنید.
+							</p>
+						</div>
+				)}
+
+				{/* Check List */}
+				{checks.length > 0 && (
+						<div className="space-y-4">
+							<div className="flex items-center justify-between">
+								<h2 className="text-xl font-semibold text-[#4C1D95]">
+									چک‌های ثبت‌شده
+								</h2>
+
+								<span className="text-sm text-[#7C6AA8]">
               تعداد نتایج:{" "}
-											{checks.length.toLocaleString("fa-IR")}
+									{checks.length.toLocaleString("fa-IR")}
             </span>
-									</div>
+							</div>
 
-									<div className="overflow-x-auto rounded-lg border">
-										<table className="w-full text-sm">
-											<thead>
-											<tr className="border-b bg-muted/50">
-												<th className="p-3 text-right">
-													نوع
-												</th>
+							<div className="overflow-x-auto rounded-2xl border border-[#DDD6FE] bg-white shadow-sm">
+								<table className="w-full text-sm">
+									<thead>
+									<tr className="border-b border-[#E9D5FF] bg-[#F5F3FF]">
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											نوع
+										</th>
 
-												<th className="p-3 text-right">
-													Sayad ID
-												</th>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											Sayad ID
+										</th>
 
-												<th className="p-3 text-right">
-													سری / سریال
-												</th>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											سری / سریال
+										</th>
 
-												<th className="p-3 text-right">
-													بانک
-												</th>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											بانک
+										</th>
 
-												<th className="p-3 text-right">
-													مبلغ
-												</th>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											مبلغ
+										</th>
 
-												<th className="p-3 text-right">
-													سررسید
-												</th>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											سررسید
+										</th>
 
-												<th className="p-3 text-right">
-													وضعیت
-												</th>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											وضعیت
+										</th>
 
-												<th className="p-3 text-right">
-													عملیات
-												</th>
-											</tr>
-											</thead>
+										<th className="p-4 text-right font-semibold text-[#4C1D95]">
+											عملیات
+										</th>
+									</tr>
+									</thead>
 
-											<tbody>
-											{checks.length > 0 ? (
-													checks.map((check) => {
-														const isDeleting =
-																deletingId === check.id;
+									<tbody>
+									{checks.map((check) => {
+										const isDeleting =
+												deletingId === check.id;
 
-														const isUpdatingStatus =
-																updatingStatusId === check.id;
+										const isUpdatingStatus =
+												updatingStatusId === check.id;
 
-														return (
-																<tr
-																		key={check.id}
-																		className="border-b last:border-b-0"
-																>
-																	<td className="p-3">
-																		{check.type === "RECEIVABLE"
-																				? "دریافتی"
-																				: "پرداختی"}
-																	</td>
+										return (
+												<tr
+														key={check.id}
+														className="border-b border-[#F0EAFE] last:border-b-0 transition hover:bg-[#FCFAFF]"
+												>
+													<td className="p-4">
+                        <span
+		                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+				                        check.type ===
+				                        "RECEIVABLE"
+						                        ? "bg-[#EDE9FE] text-[#5B21B6]"
+						                        : "bg-[#F3E8FF] text-[#7E22CE]"
+		                        }`}
+                        >
+                          {check.type ===
+                          "RECEIVABLE"
+		                          ? "دریافتی"
+		                          : "پرداختی"}
+                        </span>
+													</td>
 
-																	<td className="p-3 font-mono">
-																		{check.sayadId}
-																	</td>
+													<td className="p-4 font-mono text-[#4C1D95]">
+														{check.sayadId}
+													</td>
 
-																	<td className="p-3">
-																		{check.series} / {check.serial}
-																	</td>
+													<td className="p-4 text-[#5B21B6]">
+														{check.series} /{" "}
+														{check.serial}
+													</td>
 
-																	<td className="p-3">
-																		{check.bank.name}
-																	</td>
+													<td className="p-4 font-medium text-[#4C1D95]">
+														{check.bank.name}
+													</td>
 
-																	<td className="p-3">
-																		{Number(check.amount).toLocaleString("fa-IR")}
-																	</td>
+													<td className="p-4 font-semibold text-[#2E1065]">
+														{Number(
+																check.amount
+														).toLocaleString("fa-IR")}
+													</td>
 
-																	<td className="p-3">
-																		{new Date(check.dueDate).toLocaleDateString("fa-IR")}
-																	</td>
+													<td className="p-4 text-[#5B21B6]">
+														{new Date(
+																check.dueDate
+														).toLocaleDateString(
+																"fa-IR"
+														)}
+													</td>
 
-																	<td className="p-3">
-																		<select
-																				value={check.status}
-																				disabled={isUpdatingStatus || isDeleting}
-																				onChange={(event) =>
-																						handleStatusChange(
-																								check.id,
-																								event.target.value as CheckStatus
-																						)
-																				}
-																				className="rounded-md border bg-background px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-																		>
-																			{statuses.map((status) => (
-																					<option key={status} value={status}>
-																						{statusLabels[status]}
-																					</option>
-																			))}
-																		</select>
-																	</td>
-
-																	<td className="p-3">
-																		<div className="flex gap-2">
-																			<button
-																					type="button"
-																					onClick={() => onEdit(check)}
-																					disabled={isDeleting || isUpdatingStatus}
-																					className="rounded-md border px-3 py-1 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-																			>
-																				ویرایش
-																			</button>
-
-																			<button
-																					type="button"
-																					onClick={() => handleDelete(check)}
-																					disabled={isDeleting || isUpdatingStatus}
-																					className="rounded-md border border-red-500 px-3 py-1 text-sm text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-																			>
-																				{isDeleting ? "در حال حذف..." : "حذف"}
-																			</button>
-																		</div>
-																	</td>
-																</tr>
-														);
-													})
-											) : (
-													<tr>
-														<td
-																colSpan={8}
-																className="p-10 text-center"
+													<td className="p-4">
+														<select
+																value={check.status}
+																disabled={
+																		isUpdatingStatus ||
+																		isDeleting
+																}
+																onChange={(event) =>
+																		handleStatusChange(
+																				check.id,
+																				event.target
+																						.value as CheckStatus
+																		)
+																}
+																className="rounded-lg border border-[#C4B5FD] bg-white px-2.5 py-2 text-sm text-[#5B21B6] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD] disabled:cursor-not-allowed disabled:opacity-50"
 														>
-															<div className="space-y-2">
-																<p className="font-medium">
-																	{Object.values(appliedFilters).some(Boolean)
-																			? "هیچ چکی با فیلترهای انتخاب‌شده پیدا نشد."
-																			: "هنوز هیچ چکی ثبت نشده است."}
-																</p>
+															{statuses.map(
+																	(status) => (
+																			<option
+																					key={status}
+																					value={status}
+																			>
+																				{
+																					statusLabels[
+																							status
+																							]
+																				}
+																			</option>
+																	)
+															)}
+														</select>
+													</td>
 
-																<p className="text-sm text-muted-foreground">
-																	{Object.values(appliedFilters).some(Boolean)
-																			? "فیلترها را تغییر دهید یا پاک کنید."
-																			: "برای شروع، اولین چک خود را ثبت کنید."}
-																</p>
-															</div>
-														</td>
-													</tr>
-											)}
-											</tbody>
-										</table>
-									</div>
-								</div>
-						)
-				}
+													<td className="p-4">
+														<div className="flex flex-wrap gap-2">
+															<button
+																	type="button"
+																	onClick={() =>
+																			onEdit(check)
+																	}
+																	disabled={
+																			isDeleting ||
+																			isUpdatingStatus
+																	}
+																	className="rounded-lg border border-[#C4B5FD] bg-white px-3.5 py-2 text-sm font-medium text-[#5B21B6] transition hover:bg-[#F5F3FF] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+															>
+																ویرایش
+															</button>
 
+															<button
+																	type="button"
+																	onClick={() =>
+																			handleDelete(check)
+																	}
+																	disabled={
+																			isDeleting ||
+																			isUpdatingStatus
+																	}
+																	className="rounded-lg border border-red-300 bg-white px-3.5 py-2 text-sm font-medium text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+															>
+																{isDeleting
+																		? "در حال حذف..."
+																		: "حذف"}
+															</button>
+														</div>
+													</td>
+												</tr>
+										);
+									})}
+									</tbody>
+								</table>
+							</div>
+						</div>
+				)}
+
+				{/* Pagination */}
 				<div
 						dir="rtl"
-						className="mt-6 flex flex-col gap-4 border-t pt-4 lg:flex-row lg:items-center lg:justify-between"
+						className="mt-6 flex flex-col gap-4 border-t border-[#E9D5FF] pt-5 lg:flex-row lg:items-center lg:justify-between"
 				>
 					{/* Info + Page Size */}
 					<div className="flex flex-wrap items-center gap-4">
-						<div className="text-sm text-muted-foreground">
+						<div className="text-sm text-[#7C6AA8]">
 							{pagination.total > 0 ? (
 									<>
 										نمایش{" "}
 										{(
-												(pagination.page - 1) * pagination.limit +
+												(pagination.page - 1) *
+												pagination.limit +
 												1
 										).toLocaleString("fa-IR")}{" "}
 										تا{" "}
 										{Math.min(
-												pagination.page * pagination.limit,
+												pagination.page *
+												pagination.limit,
 												pagination.total
 										).toLocaleString("fa-IR")}{" "}
 										از{" "}
-										{pagination.total.toLocaleString("fa-IR")}{" "}
+										{pagination.total.toLocaleString(
+												"fa-IR"
+										)}{" "}
 										چک
 									</>
 							) : (
@@ -1238,9 +1263,9 @@ export default function CheckList({
 						</div>
 
 						<div className="flex items-center gap-2 text-sm">
-      <span className="text-muted-foreground">
-        تعداد در صفحه:
-      </span>
+            <span className="text-[#7C6AA8]">
+              تعداد در صفحه:
+            </span>
 
 							<select
 									value={limit}
@@ -1249,7 +1274,7 @@ export default function CheckList({
 													Number(event.target.value)
 											)
 									}
-									className="rounded-md border bg-background px-2 py-1.5 text-sm"
+									className="rounded-lg border border-[#C4B5FD] bg-white px-2.5 py-1.5 text-sm text-[#5B21B6] outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD]"
 							>
 								<option value={10}>۱۰</option>
 								<option value={20}>۲۰</option>
@@ -1260,14 +1285,14 @@ export default function CheckList({
 					</div>
 
 					{/* Pagination */}
-					<div className="flex items-center gap-1">
+					<div className="flex flex-wrap items-center gap-1">
 						<button
 								type="button"
 								disabled={page <= 1}
 								onClick={() =>
 										setPage((current) => current - 1)
 								}
-								className="rounded-md border px-3 py-2 text-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+								className="rounded-lg border border-[#C4B5FD] bg-white px-3 py-2 text-sm font-medium text-[#5B21B6] transition hover:bg-[#F5F3FF] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
 						>
 							قبلی
 						</button>
@@ -1277,10 +1302,10 @@ export default function CheckList({
 										pageNumber === "..." ? (
 												<span
 														key={`ellipsis-${index}`}
-														className="px-2 text-sm text-muted-foreground"
+														className="px-2 text-sm text-[#8B7AAE]"
 												>
-            ...
-          </span>
+                  ...
+                </span>
 										) : (
 												<button
 														key={pageNumber}
@@ -1288,13 +1313,15 @@ export default function CheckList({
 														onClick={() =>
 																setPage(pageNumber)
 														}
-														className={`min-w-9 rounded-md border px-3 py-2 text-sm transition ${
+														className={`min-w-9 rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
 																pageNumber === page
-																		? "bg-primary text-primary-foreground"
-																		: "hover:bg-muted"
+																		? "border-[#4C1D95] bg-[#4C1D95] text-white"
+																		: "border-[#C4B5FD] bg-white text-[#5B21B6] hover:bg-[#F5F3FF]"
 														}`}
 												>
-													{pageNumber.toLocaleString("fa-IR")}
+													{pageNumber.toLocaleString(
+															"fa-IR"
+													)}
 												</button>
 										)
 						)}
@@ -1307,13 +1334,12 @@ export default function CheckList({
 								onClick={() =>
 										setPage((current) => current + 1)
 								}
-								className="rounded-md border px-3 py-2 text-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+								className="rounded-lg border border-[#C4B5FD] bg-white px-3 py-2 text-sm font-medium text-[#5B21B6] transition hover:bg-[#F5F3FF] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
 						>
 							بعدی
 						</button>
 					</div>
 				</div>
-
 			</div>
 	);
 }
