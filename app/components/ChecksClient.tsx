@@ -13,7 +13,8 @@ export default function ChecksClient({
 	                                     companyId,
                                      }: ChecksClientProps) {
 	const [refreshKey, setRefreshKey] = useState(0);
-	const [editingCheck, setEditingCheck] = useState<Check | null>(null);
+	const [editingCheck, setEditingCheck] =
+			useState<Check | null>(null);
 
 	function handleCheckCreated() {
 		setRefreshKey((current) => current + 1);
@@ -28,20 +29,29 @@ export default function ChecksClient({
 	}
 
 	return (
-			<div className="space-y-8">
-				<CreateCheckForm
-						key={editingCheck?.id ?? "create"}
-						companyId={companyId}
-						onCheckCreated={handleCheckCreated}
-						editingCheck={editingCheck}
-						onEditFinished={handleEditFinished}
-				/>
+			<div
+					dir="rtl"
+					className="mx-auto w-full max-w-[1600px] space-y-10 px-4 py-6 sm:px-6 lg:px-8"
+			>
+				{/* Create / Edit Check */}
+				<div className="mx-auto w-full max-w-4xl">
+					<CreateCheckForm
+							key={editingCheck?.id ?? "create"}
+							companyId={companyId}
+							onCheckCreated={handleCheckCreated}
+							editingCheck={editingCheck}
+							onEditFinished={handleEditFinished}
+					/>
+				</div>
 
-				<CheckList
-						companyId={companyId}
-						refreshKey={refreshKey}
-						onEdit={handleEdit}
-				/>
+				{/* Check List */}
+				<div className="w-full">
+					<CheckList
+							companyId={companyId}
+							refreshKey={refreshKey}
+							onEdit={handleEdit}
+					/>
+				</div>
 			</div>
 	);
 }
