@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import {FormEvent, useState} from "react";
+import {useRouter} from "next/navigation";
 
 export default function CreateCompanyForm() {
 	const router = useRouter();
@@ -30,27 +30,31 @@ export default function CreateCompanyForm() {
 			const data = await response.json();
 
 			if (!response.ok) {
-				setError(data.message ?? "Something went wrong");
+				setError(data.message ?? "خطایی رخ داد");
 				return;
 			}
 
 			setName("");
 			router.refresh();
 		} catch {
-			setError("Something went wrong");
+			setError("خطایی در ارتباط با سرور رخ داد");
 		} finally {
 			setLoading(false);
 		}
 	}
 
 	return (
-			<form onSubmit={handleSubmit} className="mt-8 max-w-md">
+			<form
+					onSubmit={handleSubmit}
+					dir="rtl"
+					className="w-full max-w-2xl"
+			>
 				<div>
 					<label
 							htmlFor="company-name"
-							className="mb-2 block"
+							className="mb-2 block text-sm font-semibold text-[#5B21B6]"
 					>
-						Company name
+						نام شرکت
 					</label>
 
 					<input
@@ -58,25 +62,30 @@ export default function CreateCompanyForm() {
 							type="text"
 							value={name}
 							onChange={(event) => setName(event.target.value)}
-							placeholder="Enter company name"
-							className="w-full rounded-md border px-4 py-2"
+							placeholder="نام شرکت را وارد کنید"
+							className="w-full rounded-xl border border-[#DDD6FE] bg-white px-4 py-3 text-sm text-[#2E1065] outline-none transition placeholder:text-[#A78BCA] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD] disabled:cursor-not-allowed disabled:bg-[#F5F3FF]"
 							required
+							disabled={loading}
 					/>
 				</div>
 
 				{error && (
-						<p className="mt-2 text-sm text-red-500">
-							{error}
-						</p>
+						<div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+							<p className="text-sm font-medium text-red-600">
+								{error}
+							</p>
+						</div>
 				)}
 
-				<button
-						type="submit"
-						disabled={loading}
-						className="mt-4 rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
-				>
-					{loading ? "Creating..." : "Create Company"}
-				</button>
+				<div className="mt-5 flex items-center">
+					<button
+							type="submit"
+							disabled={loading}
+							className="rounded-xl bg-[#4C1D95] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#6D28D9] focus:outline-none focus:ring-2 focus:ring-[#C4B5FD] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						{loading ? "در حال ایجاد..." : "ایجاد شرکت"}
+					</button>
+				</div>
 			</form>
 	);
 }
