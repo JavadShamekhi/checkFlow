@@ -21,37 +21,34 @@ const statusConfig = [
 	{
 		key: "pending",
 		label: "در انتظار",
+		color: "#8B5CF6",
 	},
 	{
 		key: "due",
 		label: "سررسید",
+		color: "#C4B5FD",
 	},
 	{
 		key: "paid",
 		label: "پرداخت شده",
+		color: "#6D28D9",
 	},
 	{
 		key: "received",
 		label: "دریافت شده",
+		color: "#A78BFA",
 	},
 	{
 		key: "bounced",
 		label: "برگشتی",
+		color: "#DC2626",
 	},
 	{
 		key: "cancelled",
 		label: "لغو شده",
+		color: "#9CA3AF",
 	},
 ] as const;
-
-const chartColors = [
-	"#3b82f6",
-	"#f59e0b",
-	"#22c55e",
-	"#14b8a6",
-	"#ef4444",
-	"#6b7280",
-];
 
 export default function CheckStatusChart({
 	                                         pending,
@@ -74,6 +71,7 @@ export default function CheckStatusChart({
 			.map((status) => ({
 				name: status.label,
 				value: values[status.key],
+				color: status.color,
 			}))
 			.filter((item) => item.value > 0);
 
@@ -83,19 +81,19 @@ export default function CheckStatusChart({
 	);
 
 	return (
-			<div className="rounded-xl border bg-card p-6">
+			<div dir="rtl">
 				<div>
-					<h2 className="text-lg font-semibold">
+					<h2 className="text-lg font-bold text-[#2E1065]">
 						وضعیت چک‌ها
 					</h2>
 
-					<p className="mt-1 text-sm text-muted-foreground">
+					<p className="mt-1 text-sm text-[#7C6AA8]">
 						توزیع چک‌های شرکت بر اساس وضعیت فعلی
 					</p>
 				</div>
 
 				{total === 0 ? (
-						<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+						<div className="flex h-[300px] items-center justify-center text-sm text-[#8B7AAE]">
 							اطلاعاتی برای نمایش وجود ندارد.
 						</div>
 				) : (
@@ -112,18 +110,24 @@ export default function CheckStatusChart({
 												innerRadius={70}
 												outerRadius={105}
 												paddingAngle={2}
+												stroke="#FFFFFF"
+												strokeWidth={2}
 										>
-											{data.map((entry, index) => (
+											{data.map((entry) => (
 													<Cell
 															key={entry.name}
-															fill={
-																chartColors[index % chartColors.length]
-															}
+															fill={entry.color}
 													/>
 											))}
 										</Pie>
 
 										<Tooltip
+												contentStyle={{
+													borderRadius: "12px",
+													border: "1px solid #DDD6FE",
+													backgroundColor: "#FFFFFF",
+													color: "#2E1065",
+												}}
 												formatter={(value) => [
 													value,
 													"تعداد",
@@ -134,29 +138,26 @@ export default function CheckStatusChart({
 							</div>
 
 							<div className="space-y-3">
-								{data.map((item, index) => (
+								{data.map((item) => (
 										<div
 												key={item.name}
-												className="flex items-center justify-between"
+												className="flex items-center justify-between rounded-xl border border-[#E9D5FF] bg-[#F5F3FF] px-3 py-2.5"
 										>
-											<div className="flex items-center gap-2">
+											<div className="flex items-center gap-2.5">
                   <span
-		                  className="h-3 w-3 rounded-full"
+		                  className="h-3 w-3 shrink-0 rounded-full"
 		                  style={{
-			                  backgroundColor:
-					                  chartColors[
-					                  index % chartColors.length
-							                  ],
+			                  backgroundColor: item.color,
 		                  }}
                   />
 
-												<span className="text-sm">
+												<span className="text-sm font-medium text-[#5B21B6]">
                     {item.name}
                   </span>
 											</div>
 
-											<span className="text-sm font-semibold">
-                  {item.value}
+											<span className="text-sm font-bold text-[#2E1065]">
+                  {item.value.toLocaleString("fa-IR")}
                 </span>
 										</div>
 								))}
