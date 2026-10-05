@@ -85,18 +85,13 @@ export default function NotificationBell() {
 		function handleOutsideClick(event: MouseEvent) {
 			if (
 					containerRef.current &&
-					!containerRef.current.contains(
-							event.target as Node
-					)
+					!containerRef.current.contains(event.target as Node)
 			) {
 				setIsOpen(false);
 			}
 		}
 
-		document.addEventListener(
-				"mousedown",
-				handleOutsideClick
-		);
+		document.addEventListener("mousedown", handleOutsideClick);
 
 		return () => {
 			document.removeEventListener(
@@ -143,9 +138,7 @@ export default function NotificationBell() {
 		}
 	}
 
-	async function handleMarkAsRead(
-			notificationId: string
-	) {
+	async function handleMarkAsRead(notificationId: string) {
 		const notification = notifications.find(
 				(item) => item.id === notificationId
 		);
@@ -225,7 +218,8 @@ export default function NotificationBell() {
 
 			if (!response.ok) {
 				throw new Error(
-						data.error || "Failed to mark all notifications as read"
+						data.error ||
+						"Failed to mark all notifications as read"
 				);
 			}
 
@@ -259,13 +253,30 @@ export default function NotificationBell() {
 						title="اعلان‌ها"
 						onClick={handleOpen}
 						disabled={loading}
-						className="relative flex h-10 w-10 items-center justify-center rounded-md border hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+						className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-[#C4B5FD] bg-[#6D28D9] text-white transition hover:bg-[#4C1D95] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
 				>
-					<span className="text-lg">🔔</span>
+					<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="1.8"
+							className="h-5 w-5"
+					>
+						<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M15 17h5l-1.4-1.6a2 2 0 0 1-.6-1.4V10a6 6 0 0 0-12 0v4a2 2 0 0 1-.6 1.4L4 17h5"
+						/>
+						<path
+								strokeLinecap="round"
+								d="M10 20h4"
+						/>
+					</svg>
 
 					{unreadCount > 0 && (
 							<span
-									className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
+									className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
 					)}
@@ -273,16 +284,16 @@ export default function NotificationBell() {
 
 				{isOpen && (
 						<div
-								className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border bg-card shadow-lg">
+								className="absolute left-0 top-14 z-50 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white shadow-xl">
 							{/* Header */}
-							<div className="flex items-center justify-between border-b p-4">
+							<div className="flex items-center justify-between border-b border-[#E9D5FF] bg-[#F5F3FF] p-4">
 								<div>
-									<h2 className="font-semibold">
+									<h2 className="font-bold text-[#2E1065]">
 										اعلان‌ها
 									</h2>
 
 									{unreadCount > 0 && (
-											<p className="mt-1 text-xs text-muted-foreground">
+											<p className="mt-1 text-xs text-[#7C6AA8]">
 												{unreadCount} اعلان خوانده‌نشده
 											</p>
 									)}
@@ -292,7 +303,7 @@ export default function NotificationBell() {
 										<button
 												type="button"
 												onClick={handleMarkAllAsRead}
-												className="text-xs text-primary hover:underline"
+												className="rounded-lg px-2 py-1 text-xs font-semibold text-[#6D28D9] transition hover:bg-white hover:text-[#4C1D95]"
 										>
 											همه را خواندم
 										</button>
@@ -301,25 +312,50 @@ export default function NotificationBell() {
 
 							{/* Error */}
 							{error && (
-									<div className="border-b px-4 py-3 text-sm text-destructive">
+									<div className="border-b border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
 										{error}
 									</div>
 							)}
 
 							{/* Loading */}
 							{loadingList ? (
-									<div className="p-6 text-center text-sm text-muted-foreground">
-										در حال دریافت اعلان‌ها...
+									<div className="p-8 text-center">
+										<div
+												className="mx-auto h-8 w-8 animate-spin rounded-full border-3 border-[#DDD6FE] border-t-[#6D28D9]"/>
+
+										<p className="mt-3 text-sm text-[#7C6AA8]">
+											در حال دریافت اعلان‌ها...
+										</p>
 									</div>
 							) : notifications.length === 0 ? (
 									<div className="p-8 text-center">
-										<div className="text-3xl">🔕</div>
+										<div
+												className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#F5F3FF] text-[#6D28D9]">
+											<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="1.8"
+													className="h-6 w-6"
+											>
+												<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														d="M15 17h5l-1.4-1.6a2 2 0 0 1-.6-1.4V10a6 6 0 0 0-12 0v4a2 2 0 0 1-.6 1.4L4 17h5"
+												/>
+												<path
+														strokeLinecap="round"
+														d="M10 20h4"
+												/>
+											</svg>
+										</div>
 
-										<p className="mt-3 text-sm font-medium">
+										<p className="mt-4 text-sm font-semibold text-[#2E1065]">
 											اعلانی وجود ندارد
 										</p>
 
-										<p className="mt-1 text-xs text-muted-foreground">
+										<p className="mt-1 text-xs text-[#8B7AAE]">
 											در حال حاضر اعلان جدیدی برای شما ثبت نشده است.
 										</p>
 									</div>
@@ -332,33 +368,51 @@ export default function NotificationBell() {
 														onClick={() =>
 																handleMarkAsRead(notification.id)
 														}
-														className={`block w-full border-b p-4 text-right transition last:border-b-0 hover:bg-muted ${
+														className={`block w-full border-b border-[#E9D5FF] p-4 text-right transition last:border-b-0 ${
 																notification.isRead
-																		? "bg-card"
-																		: "bg-muted/40"
+																		? "bg-white hover:bg-[#F5F3FF]"
+																		: "bg-[#F5F3FF] hover:bg-[#EDE9FE]"
 														}`}
 												>
 													<div className="flex gap-3">
-                    <span className="mt-0.5 text-lg">
-                      🔔
-                    </span>
+														<div
+																className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E9D5FF] text-[#6D28D9]">
+															<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	strokeWidth="1.8"
+																	className="h-5 w-5"
+															>
+																<path
+																		strokeLinecap="round"
+																		strokeLinejoin="round"
+																		d="M15 17h5l-1.4-1.6a2 2 0 0 1-.6-1.4V10a6 6 0 0 0-12 0v4a2 2 0 0 1-.6 1.4L4 17h5"
+																/>
+																<path
+																		strokeLinecap="round"
+																		d="M10 20h4"
+																/>
+															</svg>
+														</div>
 
 														<div className="min-w-0 flex-1">
 															<div className="flex items-start justify-between gap-2">
-																<p className="font-medium">
+																<p className="font-semibold text-[#2E1065]">
 																	{notification.title}
 																</p>
 
 																{!notification.isRead && (
-																		<span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-red-500"/>
+																		<span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#6D28D9]"/>
 																)}
 															</div>
 
-															<p className="mt-1 text-sm text-muted-foreground">
+															<p className="mt-1 text-sm leading-6 text-[#7C6AA8]">
 																{notification.message}
 															</p>
 
-															<p className="mt-2 text-xs text-muted-foreground">
+															<p className="mt-2 text-xs text-[#A78BCA]">
 																{formatDate(notification.createdAt)}
 															</p>
 														</div>
