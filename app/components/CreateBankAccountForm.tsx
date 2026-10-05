@@ -14,7 +14,7 @@ type CreateBankAccountFormProps = {
 
 export default function CreateBankAccountForm({
 	                                              companyId,
-	                                              onAccountCreated
+	                                              onAccountCreated,
                                               }: CreateBankAccountFormProps) {
 	const [banks, setBanks] = useState<Bank[]>([]);
 	const [bankId, setBankId] = useState("");
@@ -84,6 +84,7 @@ export default function CreateBankAccountForm({
 			setAccountNumber("");
 			setIban("");
 			setOwnerName("");
+
 			onAccountCreated();
 		} catch {
 			setMessage("خطا در ارتباط با سرور");
@@ -95,81 +96,116 @@ export default function CreateBankAccountForm({
 	return (
 			<form
 					onSubmit={handleSubmit}
-					className="max-w-xl space-y-4 rounded-lg border p-6"
+					className="w-full max-w-3xl space-y-5"
 			>
-				<div className="space-y-2">
-					<label htmlFor="bank">بانک</label>
+				<div className="grid gap-5 md:grid-cols-2">
+					<div className="space-y-2">
+						<label
+								htmlFor="bank"
+								className="block text-sm font-medium text-[#5B21B6]"
+						>
+							بانک
+						</label>
 
-					<select
-							id="bank"
-							value={bankId}
-							onChange={(event) => setBankId(event.target.value)}
-							disabled={loadingBanks || submitting}
-							required
-							className="w-full rounded-md border bg-background px-3 py-2"
+						<select
+								id="bank"
+								value={bankId}
+								onChange={(event) => setBankId(event.target.value)}
+								disabled={loadingBanks || submitting}
+								required
+								className="w-full rounded-xl border border-[#DDD6FE] bg-white px-3 py-3 text-sm text-[#2E1065] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD] disabled:cursor-not-allowed disabled:bg-[#F5F3FF] disabled:opacity-60"
+						>
+							<option value="">
+								{loadingBanks
+										? "در حال دریافت بانک‌ها..."
+										: "بانک را انتخاب کنید"}
+							</option>
+
+							{banks.map((bank) => (
+									<option key={bank.id} value={bank.id}>
+										{bank.name}
+									</option>
+							))}
+						</select>
+					</div>
+
+					<div className="space-y-2">
+						<label
+								htmlFor="accountNumber"
+								className="block text-sm font-medium text-[#5B21B6]"
+						>
+							شماره حساب
+						</label>
+
+						<input
+								id="accountNumber"
+								value={accountNumber}
+								onChange={(event) => setAccountNumber(event.target.value)}
+								placeholder="شماره حساب"
+								disabled={submitting}
+								className="w-full rounded-xl border border-[#DDD6FE] bg-white px-3 py-3 text-sm text-[#2E1065] placeholder:text-[#A78BCA] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD] disabled:cursor-not-allowed disabled:bg-[#F5F3FF] disabled:opacity-60"
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<label
+								htmlFor="iban"
+								className="block text-sm font-medium text-[#5B21B6]"
+						>
+							شماره شبا
+						</label>
+
+						<input
+								id="iban"
+								value={iban}
+								onChange={(event) => setIban(event.target.value)}
+								placeholder="IR..."
+								dir="ltr"
+								disabled={submitting}
+								className="w-full rounded-xl border border-[#DDD6FE] bg-white px-3 py-3 text-sm text-[#2E1065] placeholder:text-[#A78BCA] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD] disabled:cursor-not-allowed disabled:bg-[#F5F3FF] disabled:opacity-60"
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<label
+								htmlFor="ownerName"
+								className="block text-sm font-medium text-[#5B21B6]"
+						>
+							نام صاحب حساب
+						</label>
+
+						<input
+								id="ownerName"
+								value={ownerName}
+								onChange={(event) => setOwnerName(event.target.value)}
+								placeholder="نام صاحب حساب"
+								disabled={submitting}
+								className="w-full rounded-xl border border-[#DDD6FE] bg-white px-3 py-3 text-sm text-[#2E1065] placeholder:text-[#A78BCA] outline-none transition focus:border-[#6D28D9] focus:ring-2 focus:ring-[#C4B5FD] disabled:cursor-not-allowed disabled:bg-[#F5F3FF] disabled:opacity-60"
+						/>
+					</div>
+				</div>
+
+				<div className="flex flex-wrap items-center gap-3 pt-1">
+					<button
+							type="submit"
+							disabled={submitting || loadingBanks || !bankId}
+							className="rounded-xl bg-[#6D28D9] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4C1D95] focus:outline-none focus:ring-2 focus:ring-[#C4B5FD] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						<option value="">
-							{loadingBanks ? "در حال دریافت بانک‌ها..." : "بانک را انتخاب کنید"}
-						</option>
+						{submitting ? "در حال ثبت..." : "ثبت حساب بانکی"}
+					</button>
 
-						{banks.map((bank) => (
-								<option key={bank.id} value={bank.id}>
-									{bank.name}
-								</option>
-						))}
-					</select>
+					{message && (
+							<p
+									className={`rounded-lg px-3 py-2 text-sm ${
+											message.includes("موفقیت")
+													? "bg-[#F5F3FF] text-[#5B21B6]"
+													: "bg-red-50 text-red-600"
+									}`}
+							>
+								{message}
+							</p>
+					)}
 				</div>
-
-				<div className="space-y-2">
-					<label htmlFor="accountNumber">شماره حساب</label>
-
-					<input
-							id="accountNumber"
-							value={accountNumber}
-							onChange={(event) => setAccountNumber(event.target.value)}
-							placeholder="شماره حساب"
-							disabled={submitting}
-							className="w-full rounded-md border bg-background px-3 py-2"
-					/>
-				</div>
-
-				<div className="space-y-2">
-					<label htmlFor="iban">شماره شبا</label>
-
-					<input
-							id="iban"
-							value={iban}
-							onChange={(event) => setIban(event.target.value)}
-							placeholder="IR..."
-							disabled={submitting}
-							className="w-full rounded-md border bg-background px-3 py-2"
-					/>
-				</div>
-
-				<div className="space-y-2">
-					<label htmlFor="ownerName">نام صاحب حساب</label>
-
-					<input
-							id="ownerName"
-							value={ownerName}
-							onChange={(event) => setOwnerName(event.target.value)}
-							placeholder="نام صاحب حساب"
-							disabled={submitting}
-							className="w-full rounded-md border bg-background px-3 py-2"
-					/>
-				</div>
-
-				<button
-						type="submit"
-						disabled={submitting || loadingBanks || !bankId}
-						className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-				>
-					{submitting ? "در حال ثبت..." : "ثبت حساب بانکی"}
-				</button>
-
-				{message && (
-						<p className="text-sm text-muted-foreground">{message}</p>
-				)}
 			</form>
 	);
 }
